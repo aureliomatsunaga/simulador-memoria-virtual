@@ -1,13 +1,26 @@
-﻿#include "stdio.h"
+﻿// SIMULADOR DE MEMÓRIA VIRTUAL
+// ALUNOS: AURÉLIO SHIZUO MATSUNAGA
+//         JÚLIO DO LAGO MÜELLER
+
+#include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 #include "time.h"
 #include "stdbool.h"
 
-struct Page {
+struct Page 
+{
 	char address[9];
 	Page *next;	
 } typedef Page;
+
+struct Process
+{
+	char Name[4];
+	unsigned long int Size;
+	int numPages;
+} typedef PROCESS;
+
 
 char *alg, *filePath, line[20], tmpAddress[9];
 int pageSize, memSize, numPages, operations=0, reads=0, writes=0, hits=0, misses=0, writebacks=0, usedPages=0;
