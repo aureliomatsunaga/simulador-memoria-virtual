@@ -1,12 +1,12 @@
-# Virtual Memory Manager Simulator
+# Simulador de memória virtual
 
-- **Originally developed by:** [Joel Rodrigues](https://github.com/joelrlneto/memoriavirtual)
-- **Modified & adapted by:** [Aurelio Matsunaga](https://github.com/aureliomatsunaga) & [Julio L. Muller](https://github.com/juliolmuller)
-- **Released on:** May 29, 2019
-- **Updated on:** May 29, 2019
-- **Latest version:** 0.6
-- **License:** MIT
+Para compilar o arquivo utilize o g++ digitando o seguinte comando:
+g++ manager.cpp -o manager
 
-## Overview
+Para executar o arquivo você deve passar como parâmetros:
+- O tamanho da página.
+- O tamanho da memória física.
+- O caminho para o arquivo com os processos.
 
-This project aims to simulate a virtual memory manager with paging, using process scaling algorithms.
+Exemplo de execução:
+./manager 100 1000 processos.txt

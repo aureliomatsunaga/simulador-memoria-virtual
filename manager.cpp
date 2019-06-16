@@ -22,7 +22,7 @@ struct Process
 } typedef PROCESS;
 
 
-char *alg, *filePath, line[20], tmpAddress[9];
+char *alg, *filePath, *tmpLine, line[20], tmpAddress[9], proc[3];
 int pageSize, memSize, numPages, operations=0, reads=0, writes=0, hits=0, misses=0, writebacks=0, usedPages=0;
 float faults=0;
 FILE *file;
@@ -60,22 +60,11 @@ void FIFO(char value[9]){
 		first = first->next;
 }
 
-void Random(char value[9]){
-	writes++;
-	srand(time(NULL));	
-	int index = rand() % usedPages;
-	Page *tmp = first;
-	for(int i = 0; i < index; i++){
-		tmp = tmp->next;
-	}
-	strcpy(tmp->address, value);
-}
-
 bool Find(char value[9]){
 	Page *tmp = first, *prev = NULL;
 	while(tmp != NULL){
 		if(strcmp(tmp->address, value)==0){
-			if(strcmp(alg, "lru") == 0){
+			if(strcmp(alg, "LRU") == 0){
 				if(prev != NULL){
 					if(tmp->next != NULL)
 						prev->next = tmp->next;							
@@ -97,13 +86,10 @@ bool Find(char value[9]){
 }
 
 void ReplacePage(char value[9]){
-	if(strcmp(alg, "lru") == 0){
+	if(strcmp(alg, "LRU") == 0){
 		LRU(value);
 	}
-	else if(strcmp(alg, "random") == 0){
-		Random(value);
-	}
-	else if(strcmp(alg, "fifo") == 0){
+	else if(strcmp(alg, "FIFO") == 0){
 		FIFO(value);
 	}
 	writebacks++;
@@ -128,39 +114,30 @@ void FreeMemory(){
 	fclose(file);
 }
 
-int main(int argc, char *argv[]){
-	alg = argv[1];
-	filePath = argv[2];
-	pageSize = atoi(argv[3]);
-	memSize = atoi(argv[4]);
-
-	if(pageSize < 2 || pageSize > 64){	
-		printf("ERRO: O tamanho de cada pagina deve estar entre 2 e 64.");
-		return 0;
-	}
-		
-	if(memSize < 128 || memSize > 16384){
-		printf("ERRO: O tamanho da memoria deve estar entre 128 e 16384.");
-		return 0;
-	}	
-	
-	if(strcmp(alg, "lru") && strcmp(alg, "fifo") && strcmp(alg,"random")){
-		printf("ERRO: O algoritmo deve ser lru, fifo ou random.");
-		return 0;	
-	}
-	
-	numPages = memSize/pageSize;
-		
+int SimulateVirtualMemory(){
+	printf("\nSimulador de memoria virtual utilizando %s\n", alg);
+	printf("Tamanho da memoria fisica: %iKB\n", memSize);
+	printf("Tamanho das paginas: %iKB\n", pageSize);
+	printf("Numero total de paginas: %i\n", numPages);
 	if(strlen(filePath) > 0){
 		file = fopen(filePath, "r");
 		while(fgets(line, 20, file) != NULL){
 			operations++;
-			strncpy(tmpAddress, line, 8);
-			tmpAddress[8] = '\0';
-			if(line[9] == 'W' || line[9] == 'w'){
+			tmpLine = line + 5;
+			strncpy(tmpAddress, tmpLine, 7);
+			tmpAddress[9] = '\0';
+			strncpy(proc, line, 2);
+			proc[2] = '\0';
+			if(line[3] == 'W'){
+				printf(proc);
+				printf(" escrita no endereco de memoria ");
+				printf(tmpAddress);
 				WriteAddress(tmpAddress);
 			}
-			else if(line[9] == 'R' || line[9] == 'r'){				
+			else if(line[3] == 'R'){
+				printf(proc);
+				printf(" leitura no endereco de memoria ");
+				printf(tmpAddress);
 				if(Find(tmpAddress)){
 					hits++;	
 				}
@@ -170,9 +147,10 @@ int main(int argc, char *argv[]){
 				}
 				reads++;
 			}
-			else{
-				printf("ERRO: Os dados do arquivo de entrada estao em formato incorreto.");
-				return 0;	
+			else if (line[3] == 'C'){
+				printf(proc);
+				printf(" criado");
+				printf("\n");
 			}	
 		}
 	}
@@ -181,12 +159,7 @@ int main(int argc, char *argv[]){
 		return 0;
 	}
 	
-	printf("\nExecutando o simulador...\n");
-	printf("Tamanho da memoria: %iKB\n", memSize);
-	printf("Tamanho das paginas: %iKB\n", pageSize);
-	printf("Tecnica de reposicao: %s\n", alg);
-	printf("Numero de paginas: %i\n", numPages);
-	printf("Operacoes no arquivo de entrada: %i\n", operations);
+	printf("\nTotal de operacoes: %i\n", operations);
 	printf("Operacoes de leitura: %i\n", reads);
 	printf("Operacoes de escrita: %i\n", writes);
 	printf("Page hits: %i\n", hits);
@@ -195,6 +168,39 @@ int main(int argc, char *argv[]){
 	printf("Taxa de page fault: %f%% \n", faults/writes*100);
 	
 	FreeMemory();
+	return 0;
+}
+
+int main(int argc, char *argv[]){
+	pageSize = atoi(argv[1]);
+	memSize = atoi(argv[2]);
+	filePath = argv[3];
+
+	if(pageSize <= 0 || memSize <= 0){	
+		printf("ERRO: Argumentos invalidos!");
+		return 0;
+	}
+		
+	if(memSize % pageSize != 0){
+		printf("ERRO: Argumentos devem ser multiplos entre si!");
+		return 0;
+	}
+	if(memSize < pageSize){
+		printf("ERRO: Memoria deve ser maior que o tamanho da pagina!");
+	}
+	
+	numPages = memSize/pageSize;
+
+	alg = "LRU";
+	SimulateVirtualMemory();
+	printf("\nPressione ENTER para continuar\n");
+	getchar();
+
+	operations=0, reads=0, writes=0, hits=0, misses=0, writebacks=0, usedPages=0, faults=0;
+	alg = "FIFO";
+	SimulateVirtualMemory();
+	printf("\nPressione ENTER para encerrar\n");
+	getchar();
 		
 	return 0;
 }
